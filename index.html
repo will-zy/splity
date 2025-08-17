@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDF → Nome</title>
+
+  <!-- tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'primary-blue': '#0057B7',
+            'primary-blue-dark': '#004A9E',
+            'primary-blue-light': '#E0F2FF',
+            'primary-blue-lighter': '#C0E0FF',
+          },
+          boxShadow: {
+            '3xl': '0 35px 60px -15px rgba(0, 0, 0, 0.5)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- aliases/atalhos com @apply -->
+  <style type="text/tailwindcss">
+    @layer components {
+      .card { @apply max-w-4xl w-full mx-auto my-auto bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-3xl dark:shadow-md border border-slate-200 dark:border-gray-800 relative overflow-hidden transition-colors duration-300 ease-in-out; }
+      .gradient-mask { @apply absolute inset-0 bg-gradient-to-br from-primary-blue/5 via-transparent to-primary-blue/10 opacity-60 rounded-2xl dark:hidden; }
+
+      .section-title { @apply mb-8 text-center pb-6 border-b border-slate-200 dark:border-gray-800; }
+      .muted { @apply text-slate-600 dark:text-slate-400; }
+
+      .dropzone { @apply relative flex flex-col items-center justify-center p-8 border-2 border-dashed border-primary-blue/50 rounded-lg cursor-pointer transition-all duration-200 bg-slate-50 hover:bg-slate-100 dark:bg-gray-800/50 dark:hover:bg-gray-800 dark:border-gray-600; }
+      .dropzone-active { @apply border-primary-blue bg-slate-100 dark:bg-gray-800; }
+
+      .input-text { @apply mt-1 block w-full rounded-lg border border-slate-300 dark:border-gray-700 shadow-sm p-3 bg-white dark:bg-gray-900 text-slate-800 dark:text-slate-100 focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/30 outline-none transition; }
+
+      .btn { @apply font-semibold rounded-lg px-3 py-3 disabled:opacity-50 disabled:pointer-events-none; }
+      .btn-primary { @apply w-full bg-primary-blue hover:bg-primary-blue-dark text-white font-bold py-3.5 px-4 text-xl shadow-lg hover:shadow-xl transition-all; }
+      .btn-ghost { @apply bg-slate-200 dark:bg-gray-800 text-slate-800 dark:text-slate-100; }
+      .toolbar { @apply grid grid-cols-3 gap-3; }
+
+      .progress-track { @apply w-full bg-slate-200 dark:bg-gray-800 rounded h-2; }
+      .progress-bar { @apply h-2 bg-primary-blue rounded; }
+
+      .table-shell { @apply overflow-hidden rounded-lg border border-slate-200 dark:border-gray-800; }
+      .table-head { @apply bg-slate-100 dark:bg-gray-800/60; }
+
+      .theme-btn { @apply p-2 rounded-full bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-slate-100 hover:bg-slate-300 dark:hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-blue/50; }
+    }
+  </style>
+
+  <!-- bootstrap do tema -->
+  <script>
+    (function () {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    })();
+  </script>
+
+  <!-- css custom (checkbox com SVG, accent-color, etc) -->
+  <link rel="stylesheet" href="./src/styles.css">
+</head>
+
+<body class="bg-white text-slate-800 dark:bg-gray-950 dark:text-slate-100 min-h-screen flex flex-col items-center justify-between p-4 sm:p-6 md:p-8 font-sans transition-colors duration-300 ease-in-out">
+
+  <!-- card principal -->
+  <div class="card">
+    <div class="gradient-mask"></div>
+
+    <div class="relative z-10">
+      <!-- tema -->
+      <div class="fixed top-4 right-4 z-50">
+        <button id="themeToggle" class="theme-btn" aria-label="Alternar tema" aria-pressed="false">
+          <svg id="sunIcon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h1M4 12H3m15.325 6.675l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          <svg id="moonIcon" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="section-title">
+        <h1 class="font-extrabold text-4xl mb-2 text-primary-blue tracking-tight">PDF → Nome</h1>
+        <p class="muted text-lg">Use um rótulo (ex.: “Gestor:”) para encontrar o nome e juntar todas as páginas desse nome em um único PDF.</p>
+      </div>
+
+      <!-- inputs -->
+      <div class="space-y-6 mb-8">
+        <div>
+          <label for="pdfFile" class="block text-base font-semibold">1. Selecione o arquivo PDF:</label>
+          <div id="dropZone" class="dropzone" role="button" tabindex="0" aria-label="Solte o PDF aqui" aria-controls="pdfFile">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-primary-blue mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+            <p class="text-lg font-medium">Arraste e solte seu PDF aqui ou <span class="text-primary-blue hover:underline">clique para selecionar</span></p>
+            <p id="fileNameDisplay" class="text-sm muted mt-2"></p>
+            <input type="file" id="pdfFile" accept=".pdf" class="absolute inset-0 opacity-0 cursor-pointer" aria-label="Selecionar arquivo PDF">
+          </div>
+        </div>
+
+        <div>
+          <label for="labels" class="block text-base font-semibold">2. Rótulos de busca (separados por vírgula):</label>
+          <input type="text" id="labels" value="Gestor:,Supervisor:,Responsável:" placeholder="Gestor:,Supervisor:,Responsável:" class="input-text">
+          <p class="text-xs muted mt-1">Aceita com ou sem “:”, e ignora sufixos como “ - Unidade”, “CPF”, etc.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-flow-col sm:auto-cols-max items-center gap-x-6 gap-y-3">
+          <label class="flex items-center gap-3">
+            <input type="checkbox" id="headerOnly" class="with-svg" />
+            <span class="text-base font-medium cursor-pointer">Procurar somente no cabeçalho</span>
+          </label>
+          <label class="flex items-center gap-3">
+            <input type="checkbox" id="ocrToggle" class="with-svg" />
+            <span class="text-base font-medium cursor-pointer">Ativar OCR</span>
+          </label>
+          <label class="flex items-center gap-3">
+            <input type="checkbox" id="autoZipToggle" class="with-svg" checked />
+            <span class="text-base font-medium cursor-pointer">ZIP automático</span>
+          </label>
+        </div>
+
+        <!-- arquivos -->
+        <div class="space-y-2">
+          <label class="block text-base font-semibold">3. Nome dos arquivos:</label>
+          <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <label class="inline-flex items-center gap-2">
+              <input type="radio" name="nameMode" value="orig" checked>
+              <span>Original + Nome</span>
+            </label>
+            <label class="inline-flex items-center gap-2">
+              <input type="radio" name="nameMode" value="name_only">
+              <span>Nome</span>
+            </label>
+            <label class="inline-flex items-center gap-2">
+              <input type="radio" name="nameMode" value="prefix">
+              <span>Prefixo + Nome</span>
+            </label>
+            <input
+              type="text"
+              id="namePrefix"
+              class="input-text w-60 disabled:opacity-50"
+              placeholder="Ex.: holerite"
+              disabled
+            >
+          </div>
+          <p class="text-xs muted">
+            O nome extraído é higienizado (sem acentos/espaços, com <code>_</code>).
+          </p>
+        </div>
+      </div>
+
+      <!-- ações -->
+      <div class="grid sm:grid-cols-2 gap-3">
+        <button id="processBtn" class="btn-primary">Agrupar</button>
+        <div class="toolbar">
+          <button id="downloadPdfsBtn" class="btn btn-ghost" disabled>Baixar PDFs</button>
+          <button id="downloadZipBtn"  class="btn btn-ghost" disabled>Baixar ZIP</button>
+          <button id="exportCsvBtn"    class="btn btn-ghost" disabled>Exportar CSV</button>
+        </div>
+      </div>
+
+      <!-- progresso -->
+      <div class="mt-6">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-medium">Progresso</span>
+          <span id="progressText" class="text-xs muted">Aguardando...</span>
+        </div>
+        <div class="progress-track" aria-hidden="true">
+          <div id="progressBar" class="progress-bar" style="width:0%" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- loader acessível -->
+  <div id="loader" class="mt-6 text-center text-primary-blue font-semibold text-xl hidden" role="status" aria-live="polite" aria-busy="true">
+    <span class="animate-spin inline-block w-7 h-7 border-4 border-current border-t-transparent rounded-full mr-3"></span>
+    Processando... Por favor, aguarde.
+  </div>
+
+  <!-- pré-visualização -->
+  <section id="previewSection" class="max-w-4xl w-full mx-auto mt-10 hidden">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-2xl font-bold">Pré-visualização dos Grupos</h2>
+      <label class="flex items-center gap-2">
+        <input type="checkbox" id="selectAllToggle" class="with-svg">
+        <span class="text-sm">Selecionar todos</span>
+      </label>
+    </div>
+    <div class="table-shell">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-gray-800">
+        <thead class="table-head">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Sel.</th>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Nome</th>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Páginas</th>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Contagem</th>
+          </tr>
+        </thead>
+        <tbody id="previewBody" class="divide-y divide-slate-200 dark:divide-gray-800 bg-white dark:bg-gray-900"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- log -->
+  <h2 class="text-2xl font-bold mt-10 mb-4 max-w-4xl w-full mx-auto">Log de Processamento</h2>
+  <div class="max-w-4xl w-full mx-auto bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-lg p-5 overflow-auto max-h-72 shadow-inner">
+    <pre id="log" class="font-mono text-sm whitespace-pre-wrap break-words text-slate-700 dark:text-slate-300" aria-live="polite">Aguardando arquivo para processar...</pre>
+  </div>
+
+  <footer class="mt-16 text-center text-slate-500 text-sm">
+    Feito com <span class="text-red-500">❤️</span> por Willian
+  </footer>
+
+  <!-- libs -->
+  <script src="./lib/pdf-lib.min.js" defer></script>
+  <!-- app -->
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
