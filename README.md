@@ -73,4 +73,4 @@ python -m http.server 8000
 ---
 
 ### licença
-distribuído sob a licença MIT. veja [LICENSE](https://github.com/will-zy/splity/blob/main/LICENSE) para mais informações.
+distribuído sob a licença MIT. veja [LICENSE_MIT](https://github.com/will-zy/splity/blob/main/LICENSE_MIT) para mais informações.
